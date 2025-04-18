@@ -15,7 +15,7 @@ app.use(
 	cors({
 		origin: ['http://localhost:5174',
 			 'http://localhost:5173',
-			// 'https://mer-nstack-batch11-section-j-nu.vercel.app/',
+			 'https://website-five-eta-16.vercel.app/',
 			
 			],
 		methods: ['GET', 'PUT', 'POST', 'DELETE'],
