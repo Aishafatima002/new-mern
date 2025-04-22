@@ -29,48 +29,29 @@ const login = async (req, res) => {
     res.status(400).json({ error: err, status: 400 });
   }
 };
-
-export const createUser = async (req, res) => {
-  console.log(chalk.bgCyan("Incoming call to signup API"));
-
+const createUser = async (req, res) => {
+  console.log(chalk.bgCyan("incoming call to signup api"));
   if (!req.body) {
-    return res.status(400).json({ message: "Bad request: No request body" });
+    return req.status(400).json({ message: "Bad request" });
   }
-
   try {
-    // Validate the request body
     const user = await userSchema.validateAsync(req.body);
+    const password = await bcrypt.hash(user.password, 10);
+    const newUser = await User.create({ ...user, password: password });
 
-    // Hash the password
-    const hashedPassword = await bcrypt.hash(user.password, 10);
-
-    // Create a new user
-    const newUser = await User.create({ ...user, password: hashedPassword });
-
-    // Save the new user (Note: `create` already saves the user, so this line is redundant)
-    // await newUser.save();
+    await newUser.save();
 
     res.status(201).json({
       message: "User created successfully",
-      user: { id: newUser._id, email: newUser.email }, // Use _id instead of id
+      user: { id: newUser.id, email: newUser.email },
     });
   } catch (error) {
-    if (error.isJoi) {
-      // Handle Joi validation errors
-      return res.status(400).json({
-        message: "Validation error",
-        error: error.details.map(detail => detail.message),
-      });
-    }
-
-    if (error.code === 11000) {
-      // Handle duplicate key error (e.g., duplicate email)
+    if (error?.code === 11000) {
       return res.status(409).json({
         message: "Duplicate email - Email already exists",
         error: error.message,
       });
     }
-
     console.error(chalk.bgRed("Signup Error:"), error);
     res.status(500).json({
       message: "Internal Server Error",
@@ -78,38 +59,6 @@ export const createUser = async (req, res) => {
     });
   }
 };
-
-
-// const createUser = async (req, res) => {
-//   console.log(chalk.bgCyan("incoming call to signup api"));
-//   if (!req.body) {
-//     return req.status(400).json({ message: "Bad request" });
-//   }
-//   try {
-//     const user = await userSchema.validateAsync(req.body);
-//     const password = await bcrypt.hash(user.password, 10);
-//     const newUser = await User.create({ ...user, password: password });
-
-//     await newUser.save();
-
-//     res.status(201).json({
-//       message: "User created successfully",
-//       user: { id: newUser.id, email: newUser.email },
-//     });
-//   } catch (error) {
-//     if (error?.code === 11000) {
-//       return res.status(409).json({
-//         message: "Duplicate email - Email already exists",
-//         error: error.message,
-//       });
-//     }
-//     console.error(chalk.bgRed("Signup Error:"), error);
-//     res.status(500).json({
-//       message: "Internal Server Error",
-//       error: error.message,
-//     });
-//   }
-// };
 
 const getAllUsers = async (req, res) => {
   try {
